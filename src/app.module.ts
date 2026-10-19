@@ -5,14 +5,24 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { PokemonModule } from './pokemon/pokemon.module';
 import { CommonModule } from './common/common.module';
 import { SeedModule } from './seed/seed.module';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { EnvConfig, validate } from './config/zod.validation';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true, validate
+    }),
     ServeStaticModule.forRoot({
-      rootPath: join(__dirname,'..','public'), 
+      rootPath: join(__dirname, '..', 'public'),
     }),
     PokemonModule,
-    MongooseModule.forRoot('mongodb://localhost:27017/nest-pokemon'),
+    MongooseModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService<EnvConfig>) => ({
+        uri: configService.get('MONGODB')
+      })
+    }),
     CommonModule,
     SeedModule
   ],
